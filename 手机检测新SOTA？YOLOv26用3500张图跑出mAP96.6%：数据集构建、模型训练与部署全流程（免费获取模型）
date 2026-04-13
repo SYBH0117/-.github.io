@@ -1,0 +1,510 @@
+## 摘要
+
+  
+
+
+本报告基于YOLO26目标检测算法，开发了一套面向手机目标的智能检测系统。系统采用单类目标检测架构，在自建手机数据集上进行训练与验证。
+
+数据集共包含3500张标注图像，其中训练集2700张，验证集800张。经过充分训练后，模型在验证集上取得了优异的检测性能：mAP50达到0.966，mAP50-95为0.818，精度为0.953，召回率为0.916。混淆矩阵分析显示，模型对手机的识别准确率达93%，误检率仅为7%。
+
+实验结果表明，该模型具有较高的检测准确率和鲁棒性，可满足实际应用场景中对手机目标的检测需求。
+
+##
+
+  
+
+
+**目录**
+
+[  摘要](#%C2%A0%C2%A0%E6%91%98%E8%A6%81)
+
+  
+
+
+[详细功能展示视频](#%C2%A0%E8%AF%A6%E7%BB%86%E5%8A%9F%E8%83%BD%E5%B1%95%E7%A4%BA%E8%A7%86%E9%A2%91)
+
+[功能模块](#%E5%8A%9F%E8%83%BD%E6%A8%A1%E5%9D%97)
+
+[1、用户管理模块](#1%E3%80%81%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86%E6%A8%A1%E5%9D%97)
+
+[2、界面与交互模块](#2%E3%80%81%E7%95%8C%E9%9D%A2%E4%B8%8E%E4%BA%A4%E4%BA%92%E6%A8%A1%E5%9D%97)
+
+[3、检测源管理模块](#3%E3%80%81%E6%A3%80%E6%B5%8B%E6%BA%90%E7%AE%A1%E7%90%86%E6%A8%A1%E5%9D%97)
+
+[4、检测参数配置模块](#4%E3%80%81%E6%A3%80%E6%B5%8B%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE%E6%A8%A1%E5%9D%97)
+
+[5、YOLO检测核心模块](#5%E3%80%81YOLO%E6%A3%80%E6%B5%8B%E6%A0%B8%E5%BF%83%E6%A8%A1%E5%9D%97)
+
+[6、结果显示模块](#6%E3%80%81%E7%BB%93%E6%9E%9C%E6%98%BE%E7%A4%BA%E6%A8%A1%E5%9D%97)
+
+[7、结果保存模块](#7%E3%80%81%E7%BB%93%E6%9E%9C%E4%BF%9D%E5%AD%98%E6%A8%A1%E5%9D%97)
+
+[8、工具栏功能](#8%E3%80%81%E5%B7%A5%E5%85%B7%E6%A0%8F%E5%8A%9F%E8%83%BD)
+
+[9、辅助功能](#9%E3%80%81%E8%BE%85%E5%8A%A9%E5%8A%9F%E8%83%BD)
+
+[10、数据校验模块](#10%E3%80%81%E6%95%B0%E6%8D%AE%E6%A0%A1%E9%AA%8C%E6%A8%A1%E5%9D%97)
+
+[引言](#%E5%BC%95%E8%A8%80)
+
+[背景](#%E8%83%8C%E6%99%AF)
+
+[目标检测技术发展](#%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E6%8A%80%E6%9C%AF%E5%8F%91%E5%B1%95)
+
+[手机检测的特殊性](#%E6%89%8B%E6%9C%BA%E6%A3%80%E6%B5%8B%E7%9A%84%E7%89%B9%E6%AE%8A%E6%80%A7)
+
+[数据集介绍](#%E6%95%B0%E6%8D%AE%E9%9B%86%E4%BB%8B%E7%BB%8D)
+
+[数据集构成](#%E6%95%B0%E6%8D%AE%E9%9B%86%E6%9E%84%E6%88%90)
+
+[标注情况](#%E6%A0%87%E6%B3%A8%E6%83%85%E5%86%B5)
+
+[数据划分策略](#%E6%95%B0%E6%8D%AE%E5%88%92%E5%88%86%E7%AD%96%E7%95%A5)
+
+[训练结果​编辑](#%E8%AE%AD%E7%BB%83%E7%BB%93%E6%9E%9C%E2%80%8B%E7%BC%96%E8%BE%91)
+
+[1. 模型验证结果（终端输出）​编辑](#1.%20%E6%A8%A1%E5%9E%8B%E9%AA%8C%E8%AF%81%E7%BB%93%E6%9E%9C%EF%BC%88%E7%BB%88%E7%AB%AF%E8%BE%93%E5%87%BA%EF%BC%89%E2%80%8B%E7%BC%96%E8%BE%91)
+
+[ 2. 各类曲线分析](#%C2%A02.%20%E5%90%84%E7%B1%BB%E6%9B%B2%E7%BA%BF%E5%88%86%E6%9E%90)
+
+[✅ BoxPR_curve.png（PR曲线）​编辑](#%E2%9C%85%C2%A0BoxPR_curve.png%EF%BC%88PR%E6%9B%B2%E7%BA%BF%EF%BC%89%E2%80%8B%E7%BC%96%E8%BE%91)
+
+[✅ BoxF1_curve.png（F1曲线）​编辑](#%E2%9C%85%C2%A0BoxF1_curve.png%EF%BC%88F1%E6%9B%B2%E7%BA%BF%EF%BC%89%E2%80%8B%E7%BC%96%E8%BE%91)
+
+[✅ BoxP_curve.png（精度-置信度曲线）​编辑](#%E2%9C%85%C2%A0BoxP_curve.png%EF%BC%88%E7%B2%BE%E5%BA%A6-%E7%BD%AE%E4%BF%A1%E5%BA%A6%E6%9B%B2%E7%BA%BF%EF%BC%89%E2%80%8B%E7%BC%96%E8%BE%91)
+
+[✅ BoxR_curve.png（召回率-置信度曲线）​编辑](#%E2%9C%85%C2%A0BoxR_curve.png%EF%BC%88%E5%8F%AC%E5%9B%9E%E7%8E%87-%E7%BD%AE%E4%BF%A1%E5%BA%A6%E6%9B%B2%E7%BA%BF%EF%BC%89%E2%80%8B%E7%BC%96%E8%BE%91)
+
+[3. 混淆矩阵分析](#3.%20%E6%B7%B7%E6%B7%86%E7%9F%A9%E9%98%B5%E5%88%86%E6%9E%90)
+
+[✅ confusion_matrix.png​编辑](#%E2%9C%85%C2%A0confusion_matrix.png%E2%80%8B%E7%BC%96%E8%BE%91)
+
+[✅ confusion_matrix_normalized.png​编辑](#%E2%9C%85%C2%A0confusion_matrix_normalized.png%E2%80%8B%E7%BC%96%E8%BE%91)
+
+[ 4. 训练过程（results.png）​编辑](#%C2%A04.%20%E8%AE%AD%E7%BB%83%E8%BF%87%E7%A8%8B%EF%BC%88results.png%EF%BC%89%E2%80%8B%E7%BC%96%E8%BE%91)
+
+[Ultralytics YOLO26](#ultralytics-yolo26)
+
+[概述](#overview)
+
+[主要功能](#key-features)
+
+[常用标注工具](#popular-annotation-tools)
+
+[详细功能展示视频](#%E8%AF%A6%E7%BB%86%E5%8A%9F%E8%83%BD%E5%B1%95%E7%A4%BA%E8%A7%86%E9%A2%91)
+
+* * *
+
+  
+
+
+  
+
+
+  
+
+
+## 功能模块
+
+✅ **用户登录注册**：支持密码检测，密码加密。
+
+**注册**
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/34a14763f44d429d938b5a9f0f96b145~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=OaIcliY9o6KMYdBALqRcFtdly9w%3D)![](<> "点击并拖拽以移动")​编辑
+
+**登录**
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/7bc37f7583da478aa405c069c7b534ef~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=aRExcKAtIo%2BTex241RhV7VpQAtM%3D)![](<> "点击并拖拽以移动")​编辑
+
+✅ **图片检测**：可对图片进行检测，返回检测框及类别信息。
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/61de35089a15483bb9878bbcd8499899~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129283&x-orig-sign=RnRhmTLJ%2FKdlLDCdSfYe7OSVj9o%3D)![](<> "点击并拖拽以移动")​编辑
+
+✅**参数实时调节（置信度和IoU阈值）**
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/b83f8db4bc2f447c9a26c258ef97c801~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=fi3GcNwLIGMJG8zF9Bem1CtKi5Q%3D)![](<> "点击并拖拽以移动")​编辑
+
+✅ **视频检测**：支持视频文件输入，检测视频中每一帧的情况。
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/8cad288bc16f4d69a200b9c1452e34a3~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129283&x-orig-sign=sHnWTVFgHmHlayjwDxWM1eIQZYM%3D)![](<> "点击并拖拽以移动")​编辑
+
+✅ **摄像头实时检测**：连接**USB 摄像头**，实现实时监测。
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/c8ebd15da7d54c63a06f595aee48f68f~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129283&x-orig-sign=rL6Gpye1BD1fNXy89iecOzlXo0E%3D)![](<> "点击并拖拽以移动")​编辑
+
+✅**日志记录：** 日志标签页记录操作和错误信息，带时间戳
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/1eb42be5448f433fadd230d695da3b77~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=yLuUz6vE9hKUJQlx5u%2FkGcFf81c%3D)![](<> "点击并拖拽以移动")​编辑
+
+✅**结果保存模块**：支持图片/视频/摄像头检测结果保存
+
+  
+
+
+  
+
+
+  
+
+
+### 1、用户管理模块
+
+| 功能         | 描述                                |
+| ---------- | --------------------------------- |
+| **用户注册**   | 用户名、密码、确认密码、邮箱（选填）注册，密码SHA256加密存储 |
+| **用户登录**   | 用户名密码验证，自动跳转主界面                   |
+| **用户数据存储** | JSON文件存储用户信息（密码加密、注册时间、邮箱）        |
+| **登录状态**   | 主界面显示当前登录用户名                      |
+
+### 2、界面与交互模块
+
+| 功能         | 描述                         |
+| ---------- | -------------------------- |
+| **玻璃效果界面** | 半透明毛玻璃背景，圆角边框，现代化视觉风格      |
+| **无边框窗口**  | 自定义标题栏，支持窗口拖动、最小化、最大化、关闭   |
+| **响应式布局**  | 主窗口三栏布局（左侧控制区、中央显示区、右侧信息区） |
+| **状态栏**    | 显示设备信息、模型状态、当前用户、实时时间      |
+
+### 3、检测源管理模块
+
+| 功能        | 描述                       |
+| --------- | ------------------------ |
+| **图片检测**  | 支持JPG/JPEG/PNG/BMP格式图片载入 |
+| **视频检测**  | 支持MP4/AVI/MOV/MKV格式视频载入  |
+| **摄像头检测** | 实时调用摄像头（默认ID 0）进行检测      |
+| **检测源切换** | 下拉菜单切换三种检测模式，自动更新界面状态    |
+
+### 4、检测参数配置模块
+
+| 功能        | 描述                         |
+| --------- | -------------------------- |
+| **置信度阈值** | 滑动条调节（0-100%，步长1%），实时显示当前值 |
+| **IoU阈值** | 滑动条调节（0-100%，步长1%），实时显示当前值 |
+| **类别选择**  | 动态生成检测类别复选框，支持全选/取消全选      |
+| **参数同步**  | 参数实时同步到检测器核心               |
+
+### 5、YOLO检测核心模块
+
+| 功能        | 描述                                     |
+| --------- | -------------------------------------- |
+| **模型加载**  | 加载`best.pt`模型文件，自动检测GPU可用性，支持CPU/GPU切换 |
+| **多模式检测** | 图片检测、视频检测、摄像头实时检测                      |
+| **检测线程**  | 基于QThread的多线程处理，避免界面卡顿                 |
+| **检测结果**  | 返回目标类别、置信度、边界框坐标                       |
+| **FPS计算** | 实时计算处理帧率                               |
+| **进度反馈**  | 视频处理进度条实时更新                            |
+
+### 6、结果显示模块
+
+| 功能       | 描述                        |
+| -------- | ------------------------- |
+| **实时画面** | 中央区域显示检测结果图像（带标注框）        |
+| **统计信息** | 检测状态、目标数量、FPS、处理帧数实时更新    |
+| **检测列表** | 右侧列表显示当前帧所有检测到的目标（类别+置信度） |
+| **日志记录** | 日志标签页记录操作和错误信息，带时间戳       |
+| **占位显示** | 未选择检测源时显示系统LOGO和提示文字      |
+
+### 7、结果保存模块
+
+| 功能       | 描述                                                  |
+| -------- | --------------------------------------------------- |
+| **保存开关** | 复选框控制是否保存检测结果                                       |
+| **路径选择** | 自定义保存路径，支持图片/视频格式自动识别                               |
+| **自动命名** | 保存文件自动添加时间戳（`detection_result_20240101_120000.jpg`） |
+| **视频保存** | 支持检测结果视频录制（MP4格式）                                   |
+| **手动保存** | 工具栏保存按钮可随时保存当前画面                                    |
+| **保存反馈** | 保存成功弹窗提示，日志记录保存路径                                   |
+
+### 8、工具栏功能
+
+| 功能        | 描述                  |
+| --------- | ------------------- |
+| **图片按钮**  | 快速切换到图片检测模式并打开文件选择器 |
+| **视频按钮**  | 快速切换到视频检测模式并打开文件选择器 |
+| **摄像头按钮** | 快速切换到摄像头检测模式        |
+| **保存按钮**  | 手动保存当前显示画面          |
+
+### 9、辅助功能
+
+| 功能       | 描述                        |
+| -------- | ------------------------- |
+| **错误处理** | 统一错误弹窗提示，日志记录错误详情         |
+| **资源清理** | 检测停止时自动释放摄像头、视频文件、视频写入器资源 |
+| **时间显示** | 状态栏实时显示系统时间               |
+| **模型状态** | 状态栏显示模型加载状态和当前设备（CPU/GPU） |
+
+### 10、数据校验模块
+
+| 功能       | 描述                            |
+| -------- | ----------------------------- |
+| **注册验证** | 用户名长度≥3，密码长度≥6，密码一致性检查，邮箱格式验证 |
+| **协议确认** | 注册前需勾选同意用户协议                  |
+| **文件校验** | 模型文件存在性检查，文件大小验证（≥6MB）        |
+| **输入非空** | 登录/注册时必填项非空检查                 |
+
+  
+
+
+  
+
+
+## 引言
+
+随着移动互联网的普及和智能设备的广泛应用，手机已成为人们日常生活中不可或缺的工具。在许多应用场景中，对手机目标的自动检测具有重要的实用价值，例如：
+
+-   公共场所手机使用行为监控
+-   工业生产中的手机违规带入检测
+-   手机回收流水线的自动分拣
+-   考场防作弊系统中的手机识别
+
+传统的人工监控方式效率低下且容易出错，难以满足大规模、实时性的检测需求。基于深度学习的目标检测技术为解决这一问题提供了有效的解决方案。其中，YOLO系列算法因其检测速度快、精度高的特点，在实时目标检测领域得到广泛应用。
+
+本研究采用YOLO26算法构建手机检测系统，旨在开发一个高精度、高效率的手机目标检测模型，为相关应用场景提供技术支持。
+
+  
+
+
+  
+
+
+## 背景
+
+随着移动互联网的飞速发展和智能终端设备的全面普及，智能手机已成为现代社会不可或缺的基础设施。截至2025年，全球智能手机用户数量已突破70亿，渗透率超过85%。手机不仅是通讯工具，更是集支付、办公、娱乐、社交等功能于一体的智能终端。在这种背景下，对手机目标的自动检测与识别技术在众多应用场景中展现出日益重要的价值。
+
+传统的人工监控与检测方式面临效率低下、主观性强、难以规模化等固有局限，无法满足现代智能化系统对实时性、准确性和自动化程度的要求。基于深度学习的目标检测技术，特别是YOLO系列算法，以其端到端的检测架构和优异的性能表现，为手机检测任务提供了强有力的技术支撑。
+
+本研究基于YOLO26目标检测算法，构建了一个面向手机目标的专用检测系统。系统采用单类目标检测架构，在包含3500张标注图像的自建数据集上进行训练与验证。实验结果表明，模型在验证集上取得了mAP50达到0.966、召回率达0.916的优异性能，具备良好的实际应用潜力。
+
+### 目标检测技术发展
+
+目标检测是计算机视觉领域的核心任务之一，经历了从传统机器学习方法到深度学习方法的演变：
+
+-   **传统方法**: 基于HOG、SIFT等手工特征提取，配合SVM等分类器
+-   **两阶段检测器**: 如R-CNN系列，先生成候选区域再分类，精度高但速度慢
+-   **单阶段检测器**: 如YOLO、SSD，端到端直接回归，速度快但精度稍低
+
+### 手机检测的特殊性
+
+手机目标检测面临以下挑战：
+
+1.  **尺度多样性**: 手机在不同距离下成像尺寸差异大
+1.  **姿态变化**: 手机可能以各种角度出现在图像中
+1.  **光照干扰**: 屏幕反光、阴影等影响检测效果
+1.  **遮挡问题**: 手部或其他物体可能部分遮挡手机
+
+针对以上挑战，本研究通过构建多样化的数据集和采用先进的YOLO26算法，提升模型的适应能力和鲁棒性。
+
+  
+
+
+  
+
+
+  
+
+
+## 数据集介绍
+
+### 数据集构成
+
+| 项目   | 数量        |
+| ---- | --------- |
+| 类别数  | 1         |
+| 类别名称 | ['Phone'] |
+| 训练集  | 2700张     |
+| 验证集  | 800张      |
+| 总计   | 3500张     |
+
+### 标注情况
+
+-   **总目标实例**: 训练集约3270个，验证集972个（实际验证结果显示）
+-   **标注格式**: YOLO格式归一化坐标
+-   **标注内容**: 手机目标边界框
+
+### 数据划分策略
+
+按照约77%:23%的比例随机划分为训练集和验证集：
+
+-   **训练集（2700张）** : 用于模型参数学习
+-   **验证集（800张）** : 用于模型性能评估和超参数调优
+
+确保两个数据集分布一致，验证结果具有代表性。![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/38b8010dc78c48cebe212fd6ffc9e2ef~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=vYzFB0I%2FSBz9Gnvh9DwfI6euo7A%3D)![](<> "点击并拖拽以移动")​编辑
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/22739f6d07c140458a35e6ef81572b98~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129283&x-orig-sign=Z8SISnatPPr4ddUjp1DREwCxCk8%3D)![](<> "点击并拖拽以移动")​编辑
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/055d370beea547cfb8f73d3c9093e2bf~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129283&x-orig-sign=7yUVubWnm0CUERUUlT0Gg0%2BamqA%3D)![](<> "点击并拖拽以移动")​编辑
+
+  
+
+
+  
+
+
+  
+
+
+## 训练结果![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/ce4c4a384c334a608479acd8b7b43310~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=bbXZIDPfmgGbRKyDms2XqzjOiic%3D)![](<> "点击并拖拽以移动")​编辑
+
+### **1. 模型验证结果（终端输出）** ![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/57fc294a6480495b9fe0ed482df6a6af~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129283&x-orig-sign=wqZMbt2rG25azH1P5PdG3YF74c4%3D)![](<> "点击并拖拽以移动")​编辑
+
+-   **数据集**: 800张图片，972个目标实例
+-   **mAP50**: **0.966**（非常高）
+-   **mAP50-95**: **0.818**（很好）
+-   **精度（Precision）** : 0.953
+-   **召回率（Recall）** : 0.916
+
+> **结论**: 模型在验证集上表现优异，检测准确率和召回率都很高，适合实际应用。
+
+* * *
+
+###  **2. 各类曲线分析**
+
+#### ✅ **BoxPR_curve.png（PR曲线）** ![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/3f17638e15d3485d9afc1a0d023ecf62~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=rnSDIrystC8gfFGEk9xEK43MGEU%3D)![](<> "点击并拖拽以移动")​编辑
+
+-   **Phone类AP = 0.966**
+-   曲线接近右上角，说明模型在准确率和召回率之间取得了良好平衡。
+
+#### ✅ **BoxF1_curve.png（F1曲线）** ![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/38a55882b6424ddc8c26c8e2fdb4fa94~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=QQs%2FF%2BAPgOdUurqPms88TgJiPMY%3D)![](<> "点击并拖拽以移动")​编辑
+
+-   最高F1分数为 **0.93**，对应置信度阈值约为 **0.532**
+-   说明在该阈值下，模型综合表现最佳。
+
+#### ✅ **BoxP_curve.png（精度-置信度曲线）** ![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/9419dd4cf1d942779f447676c7d68e7c~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=vk0RkU7l5I%2BJ2h949nO2N3LTPxs%3D)![](<> "点击并拖拽以移动")​编辑
+
+-   精度在置信度接近1.0时达到1.0
+-   说明高置信度下的预测几乎都是正确的。
+
+#### ✅ **BoxR_curve.png（召回率-置信度曲线）** ![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/018cca5008a143d09d316af6af6c3302~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=rcw8gtdscoA53N6XSs1Lbbt9p%2FQ%3D)![](<> "点击并拖拽以移动")​编辑
+
+-   召回率在低置信度时接近0.98，随置信度升高而下降
+-   符合预期，说明模型在宽松阈值下能检出大多数手机。
+
+* * *
+
+### **3. 混淆矩阵分析**
+
+#### ✅ **confusion_matrix.png**![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/3518732dae534f048c344f43b1e316a5~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=ogxgkTQ0oV8FmxkptYiNs8ItKt0%3D)![](<> "点击并拖拽以移动")​编辑
+
+text
+
+```
+真实\预测 | 手机 | 背景
+手机      | 908  | 64
+背景      | 69   | 200
+```
+
+-   **TP = 908**, **FN = 64**, **FP = 69**, **TN = 200**
+-   误检和漏检都较少，表现稳定。
+
+#### ✅ **confusion_matrix_normalized.png**![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/abafd06a4aa84c54a5ed486bb2b0554b~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=LUgWwYQ3nglnDldjOxQhj9S2qsg%3D)![](<> "点击并拖拽以移动")​编辑
+
+text
+
+```
+手机类召回率（TPR）: 0.93
+手机类误检率（FPR）: 0.07
+背景类识别率: 几乎为0（背景几乎不被误判为手机）
+```
+
+> **结论**: 模型对手机的识别能力很强，背景干扰很小。
+
+* * *
+
+###  **4. 训练过程（results.png）** ![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/df61cf7bdf554a7a899e35b7fe85c115~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=fQA%2FI65B9V1T9tixaMhOSIsdcaQ%3D)![](<> "点击并拖拽以移动")​编辑
+
+-   **train/box_loss**, **cls_loss**, **dfl_loss** 持续下降
+-   **val/box_loss**, **cls_loss**, **dfl_loss 也呈下降趋势**
+-   **mAP50** 和 **mAP50-95** 随epoch上升并趋于稳定
+
+>  **结论**: 训练过程收敛良好，未见明显过拟合。
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/f5524c2121c747deaa7a14ad664a8ce6~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=Ixs5AZZX7%2BsoIzHZ65K9Ni6KH4g%3D)![](<> "点击并拖拽以移动")​编辑
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/af9d81c824bf4d5f89af5412f68907b7~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129283&x-orig-sign=pdXDOVBPpyPmNETJZ0%2BTUt9wxbI%3D)![](<> "点击并拖拽以移动")​编辑
+
+  
+
+
+  
+
+
+# Ultralytics YOLO26
+
+## 概述
+
+Ultralytics  YOLO26 是 YOLO 系列实时对象检测器的最新演进，从头开始专为**边缘和低功耗设备**而设计。它引入了简化的设计，消除了不必要的复杂性，同时集成了有针对性的创新，以实现更快、更轻、更易于访问的部署。
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/410cf0ff7d94434ea480d6aa0b6b5681~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=ZnwLnuwrJgEhBrnapsG28FJ0IFo%3D)![](<> "点击并拖拽以移动")​编辑
+
+  
+
+
+YOLO26 的架构遵循三个核心原则：
+
+-   **简洁性:** YOLO26是一个**原生的端到端模型**，直接生成预测结果，无需非极大值抑制（NMS）。通过消除这一后处理步骤，推理变得更快、更轻量，并且更容易部署到实际系统中。这种突破性方法最初由清华大学的王傲在YOLOv10中开创，并在YOLO26中得到了进一步发展。
+-   **部署效率：** 端到端设计消除了管道的整个阶段，从而大大简化了集成，减少了延迟，并使部署在各种环境中更加稳健。
+-   **训练创新：** YOLO26 引入了**MuSGD 优化器**，它是SGD 和MUON的混合体——灵感来源于 Moonshot AI 在 LLM 训练中Kimi K2的突破。该优化器带来了增强的稳定性和更快的收敛，将语言模型中的优化进展转移到计算机视觉领域。
+-   **任务特定优化：** YOLO26 针对专业任务引入了有针对性的改进，包括用于 **Segmentation** 的语义分割损失和多尺度原型模块，用于高精度 **姿势估计** 的残差对数似然估计 (RLE)，以及通过角度损失优化解码以解决 **旋转框检测** 中的边界问题。
+
+这些创新共同提供了一个模型系列，该模型系列在小对象上实现了更高的精度，提供了无缝部署，并且在 **CPU 上的运行速度提高了 43%** — 使 YOLO26 成为迄今为止资源受限环境中最实用和可部署的 YOLO 模型之一。
+
+  
+
+
+## 主要功能
+
+-   **DFL 移除**  
+    分布式焦点损失（DFL）模块虽然有效，但常常使导出复杂化并限制了硬件兼容性。YOLO26 完全移除了 DFL，简化了推理过程，并拓宽了对**边缘和低功耗设备**的支持。
+-   **端到端无NMS推理**  
+    与依赖NMS作为独立后处理步骤的传统检测器不同，YOLO26是**原生端到端**的。预测结果直接生成，减少了延迟，并使集成到生产系统更快、更轻量、更可靠。
+-   **ProgLoss + STAL**  
+    改进的损失函数提高了检测精度，在**小目标识别**方面有显著改进，这是物联网、机器人、航空影像和其他边缘应用的关键要求。
+-   **MuSGD Optimizer**  
+    一种新型混合优化器，结合了SGD和Muon。灵感来自 Moonshot AI 的Kimi K2，MuSGD 将 LLM 训练中的先进优化方法引入计算机视觉，从而实现更稳定的训练和更快的收敛。
+-   **CPU推理速度提升高达43%**  
+    YOLO26专为边缘计算优化，提供显著更快的CPU推理，确保在没有GPU的设备上实现实时性能。
+-   **实例分割增强**  
+    引入语义分割损失以改善模型收敛，以及升级的原型模块，该模块利用多尺度信息以获得卓越的掩膜质量。
+-   **精确姿势估计**  
+    集​成残差对数似然估计​(RLE)，以实现更精确的关键点定位，并优化解码过程以提高推理速度。
+-   **优化旋转框检测解码**  
+    引入专门的角度损失以提高方形物体的检测精度，并优化旋转框检测解码以解决边界不连续性问题。
+
+  
+
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/67c9d984ded241fbab42291a9a2e6f60~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=k9YuJZYjhXc9TzLPM8J%2B9ETCTeg%3D)![](<> "点击并拖拽以移动")​编辑
+
+  
+
+
+### 常用标注工具
+
+假设您现在准备好进行标注。有几种开源工具可以帮助简化数据标注流程。以下是一些有用的开放标注工具：
+
+**Label Studio：一个灵活的工具，支持各种标注任务，并包含用于管理项目和质量控制的功能。 CVAT：一个强大的工具，支持各种标注格式和可定制的工作流程，使其适用于复杂的项目。 Labelme：一个简单易用的工具，可以快速标注带有多边形的图像，非常适合简单的任务。 LabelImg: 一款易于使用的图形图像标注工具，特别适合以 YOLO 格式创建边界框标注。**
+
+  
+
+
+![用于实例分割的 LabelMe 标注工具](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/ff3e78e3e3804b3c801d11c844224283~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=qWccrcbdW22l20NdJJwclvqjIWU%3D)![](<> "点击并拖拽以移动")​编辑
+
+这些开源工具经济实惠，并提供一系列功能来满足不同的标注需求。
+
+  
+
+
+  
+
+
+  
+
+
+界面核心代码：
+
+![](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/9a6cbfc6d1144ac4981ffe58edaa7844~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg5paM5pOO56eR5oqA:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTE2NTk2MjM4NzkzMDgzOSJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1776129282&x-orig-sign=NxXoX83f0ycwKcRvRn9JvNqurts%3D)![](<> "点击并拖拽以移动")​编辑
+
+  
+
+
+## 详细功能展示视频
